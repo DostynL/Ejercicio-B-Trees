@@ -3,6 +3,7 @@ package com.sebdeveloper6952;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 public final class TwoThreeTree<K, V> implements Map<K, V> {
 
@@ -19,21 +20,60 @@ public final class TwoThreeTree<K, V> implements Map<K, V> {
     }
 
     // -----------------------------------------------------------------------
-    // Public API — por implementar
+    // Public API
     // -----------------------------------------------------------------------
 
-    @Override public int size()      { return size; }
-    @Override public boolean isEmpty() { return size == 0; }
-    @Override public V get(K key)    { return null; }
-    @Override public boolean containsKey(K key) { return false; }
-    @Override public V put(K key, V value) { return null; }
-    @Override public V remove(K key) { return null; }
+    @Override
+    public int size() { return size; }
+
+    @Override
+    public boolean isEmpty() { return size == 0; }
+
+    @Override
+    public V get(K key) {
+        Entry<K, V> entry = findEntry(key);
+        return entry == null ? null : entry.value;
+    }
+
+    @Override
+    public boolean containsKey(K key) {
+        return findEntry(key) != null;
+    }
+
+    @Override
+    public V put(K key, V value) { return null; }
+
+    @Override
+    public V remove(K key) { return null; }
 
     public List<K> keysInOrder() {
         List<K> out = new ArrayList<>(size);
         collect(root, out);
         return out;
     }
+
+    // -----------------------------------------------------------------------
+    // Lookup
+    // -----------------------------------------------------------------------
+
+    private Entry<K, V> findEntry(K key) {
+        Objects.requireNonNull(key, "key");
+        Node<K, V> node = root;
+        while (node != null) {
+            int cmp0 = compare(key, node.entries[0].key);
+            if (cmp0 == 0) return node.entries[0];
+            if (cmp0 < 0) { node = node.children[0]; continue; }
+            if (node.is2Node()) { node = node.children[1]; continue; }
+            int cmp1 = compare(key, node.entries[1].key);
+            if (cmp1 == 0) return node.entries[1];
+            node = (cmp1 < 0) ? node.children[1] : node.children[2];
+        }
+        return null;
+    }
+
+    // -----------------------------------------------------------------------
+    // Helpers
+    // -----------------------------------------------------------------------
 
     private void collect(Node<K, V> node, List<K> out) {
         if (node == null) return;
@@ -49,10 +89,6 @@ public final class TwoThreeTree<K, V> implements Map<K, V> {
             collect(node.children[2], out);
         }
     }
-
-    // -----------------------------------------------------------------------
-    // Helper de comparación
-    // -----------------------------------------------------------------------
 
     @SuppressWarnings("unchecked")
     private int compare(K a, K b) {
